@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
-from django_filters import rest_framework as filters
 
+from django_filters import rest_framework as filters
 from rest_framework.filters import SearchFilter
 
-from models import Recipe, Tag
+from recipe.models import Recipe, Tag
 
 User = get_user_model()
 
@@ -58,7 +58,8 @@ class RecipeFilter(filters.FilterSet):
                     favorite_recipes__user=self.request.user
                 )
         else:
-            return queryset
+            return queryset  # Ошибка flake R503 либо
+        return queryset  # Ошибка flake R504, видимо некорректная?
 
     class Meta:
         model = Recipe

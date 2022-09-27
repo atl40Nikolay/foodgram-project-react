@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core import validators
 from django.db import models
+
 from colorfield.fields import ColorField
 
 User = get_user_model()
@@ -36,7 +37,7 @@ class Tag(models.Model):
         unique=True,
         samples=COLORS,
         help_text='Цвет тэга.',
-        )
+    )
     slug = models.SlugField(
         'уникальный слаг',
         unique=True,

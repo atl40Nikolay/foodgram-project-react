@@ -1,24 +1,22 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from djoser.serializers import UserCreateSerializer, UserSerializer
-
 from rest_framework import serializers as s
 from rest_framework.validators import UniqueValidator
-
-from models import Follow
 
 User = get_user_model()
 
 
 class FoodgramUserSerializer(UserSerializer):
-    """ """
+    """Сериализация обьекта пользователя при запросе к users."""
     is_subscribed = s.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
-        return user.follows.filter(
-            user__pk=user.id,
-            author__pk=obj.id).exists()
+        if user.is_authenticated:
+            return user.follows.filter(
+                author=obj).exists()
+        return False
 
     class Meta:
         model = User
@@ -27,7 +25,7 @@ class FoodgramUserSerializer(UserSerializer):
 
 
 class FollowsSerializer(FoodgramUserSerializer):
-    """ """
+    """Сериализация обьектов пользователей при запросе subscriptions."""
     recipes = s.SerializerMethodField()
     recipes_count = s.SerializerMethodField('get_recipescount')
 
@@ -48,15 +46,15 @@ class FollowsSerializer(FoodgramUserSerializer):
             limit = abs(int(limit))
             queryset = queryset[:limit]
         return RecipeSerializer(
-                queryset,
-                context={'request': request},
-                fields={'id', 'name', 'image', 'cooking_time'},
-                many=True
-            ).data
+            queryset,
+            context={'request': request},
+            fields={'id', 'name', 'image', 'cooking_time'},
+            many=True
+        ).data
 
 
 class FoodgramUserCreateSerializer(UserCreateSerializer):
-
+    """Десериализация обьекта пользователя при запросе к users."""
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'password', 'first_name',

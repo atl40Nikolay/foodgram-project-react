@@ -39,6 +39,11 @@ class User(AbstractUser):
     def is_admin(self):
         return bool(self.is_superuser or (self.is_staff))
 
+    class Meta:
+        ordering = ("id",)
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'пользователи'
+
 
 class Follow(models.Model):
     user = models.ForeignKey(

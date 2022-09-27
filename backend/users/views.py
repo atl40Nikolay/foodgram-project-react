@@ -10,6 +10,10 @@ User = get_user_model()
 
 
 class FoodgramUserViewSet(views.UserViewSet):
+    """
+    Обработка CRUD для пользователей. Также Create Delete обработка
+    запросов к subscribe.
+    """
     queryset = User.objects.all()
     serializer_class = FoodgramUserSerializer
     serializer_class_follow = FollowsSerializer

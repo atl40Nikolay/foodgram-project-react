@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', default='some_secret_key')
 
-ALLOWED_HOSTS = [ 'localhost', '127.0.0.1', '127.0.0.1:8000',]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '127.0.0.1:8000', 'backend:8000', 'backend', ]
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -132,7 +132,7 @@ DJOSER = {
         'current_user': 'users.serializers.FoodgramUserSerializer',
     },
     'PERMISSIONS': {
-        'user': ('core.permissions.FoodgramCurrentUserOrAdminOrReadOnly',),
+        'user': ('foodgram.core.permissions.FoodgramCurrentUserOrAdminOrReadOnly',),
         'user_list': ('rest_framework.permissions.AllowAny',)
     }
 }
@@ -146,5 +146,5 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'core.pagination.FoodgramPagination',
+    'DEFAULT_PAGINATION_CLASS': 'foodgram.core.pagination.FoodgramPagination',
 }

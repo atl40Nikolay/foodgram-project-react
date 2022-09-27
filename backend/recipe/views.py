@@ -1,18 +1,21 @@
 from django.db.models import Sum
 from django.http import HttpResponse
-from django_filters import rest_framework as filters
 
+from django_filters import rest_framework as filters
 from rest_framework import decorators, response, status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from core.filters import IngredientFilter, RecipeFilter
-from core.permissions import IsAuthorOrAdminOrReadOnly
-from models import Ingredient, Recipe, Tag
+from foodgram.core.filters import IngredientFilter, RecipeFilter
+from foodgram.core.permissions import IsAuthorOrAdminOrReadOnly
+from .models import Ingredient, Recipe, Tag
 from .serializers import IngredientSerializer, RecipeSerializer, TagsSerializer
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
+    """
+    Обработка CRUD для рецептов, также для избранного и корзины покупок.
+    """
     _RECIPE_NAME = 'recipe__name'
     _INGREDIENT_NAME = 'ingredients_for_recipe__ingredient__name'
     _MEASUREMENT_UNIT = 'ingredients_for_recipe__ingredient__measurement_unit'
@@ -56,9 +59,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
             recipe.favorited_recipe.remove(user)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-                {'errors': 'Этого рецепта ещё (или уже) нет в избранном.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            {'errors': 'Этого рецепта ещё (или уже) нет в избранном.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @decorators.action(
         detail=True,
@@ -91,9 +94,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
             recipe.in_shoping_cart.remove(user)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-                {'errors': 'Этого рецепта ещё (или уже) нет в корзине.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            {'errors': 'Этого рецепта ещё (или уже) нет в корзине.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @decorators.action(
         detail=False,
@@ -134,12 +137,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read запросы к tags."""
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
     pagination_class = None
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read запросы к ingredients."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None

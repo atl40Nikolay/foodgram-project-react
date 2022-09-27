@@ -20,8 +20,7 @@ jobs:
         pip install -r backend/requirements.txt
 
     - name: Test with flake8
-      run: |
-        python -m flake8
+      run: python -m flake8
 
   build_and_push_to_docker_hub:
     name: Build and push to Docker Hub
@@ -65,7 +64,7 @@ jobs:
 #           sudo docker-compose rm -g frontend
 #           sudo docker pull |
 #             ${{ secrets.DOCKER_USERNAME }}/foodgram_educational_project_backend:latest
-#             ${{ secrets.DOCKER_USERNAME }}/foodgram_educational_project_frontend:v1.2022
+#             ${{ secrets.DOCKER_USERNAME }}/foodgram_educational_project_frontend:v0.1.1
 #           rm -f .env
 #           touch .env
 #           echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env

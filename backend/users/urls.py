@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from core.routers import StandartRouter
+from foodgram.core.routers import StandartRouter
 from .views import FoodgramUserViewSet
 
 app_name = 'users'
