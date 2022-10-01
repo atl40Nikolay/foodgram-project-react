@@ -6,11 +6,8 @@ from .models import Follow, User
 class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'username', 'first_name', 'last_name',
                     'password', 'is_active')
-
-
-class FollowAdmin(admin.ModelAdmin):
-    list_display = ('user', 'author')
+    list_filter = ('email', 'username')
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(Follow, FollowAdmin)
+admin.site.register(Follow)

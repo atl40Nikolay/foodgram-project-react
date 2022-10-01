@@ -8,7 +8,7 @@ volumes:
 services:
 
   frontend:
-    image: atl40/foodgram_educational_project_frontend:v0.1.0
+    image: atl40/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
 
@@ -21,7 +21,10 @@ services:
       - ./.env
 
   backend:
-    image: atl40/foodgram_educational_project_backend:latest
+    image: atl40/foodgram_backend:latest
+    # build:
+    #   context: ../backend
+    #   dockerfile: Dockerfile
     restart: always
     volumes:
       - static_value:/code/static/
@@ -43,7 +46,7 @@ services:
       - static_value:/var/html/static/
       - media_value:/var/html/media/
     depends_on:
-      - frontend
+      # - frontend
       - backend
 
 

@@ -1,26 +1,17 @@
 from rest_framework import permissions
 
 
-class FoodgramCurrentUserOrAdminOrReadOnly(
-        permissions.IsAuthenticatedOrReadOnly):
+class IsAdminOrReadOnly(permissions.BasePermission):
     """
-    Пермишн для проверки доступа пользователей к спискам пользователей.
+    Пермишн для доступа к тэгам и ингредиентам. Разрешено
+    чтение для всех, создание, редаетирование и удаление
+    только для уникальных белых снежинок.
     """
-    def has_permission(self, request, view):
-        if (view.action not in ('list', 'retrieve', )
-                and not request.user.is_authenticated):
-            return False
-        return bool(
-            request.method in permissions.SAFE_METHODS
-            or request.user
-            and request.user.is_authenticated
-        )
 
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        if type(obj) == type(user) and obj == user:
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
             return True
-        return request.method in permissions.SAFE_METHODS or user.is_admin
+        return bool(request.user.is_authenticated and request.user.is_admin)
 
 
 class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):

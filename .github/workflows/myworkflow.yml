@@ -44,7 +44,7 @@ jobs:
         with:
           push: true
           context: ./backend/
-          tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_educational_project_backend:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
 
 
 #   deploy:
@@ -63,8 +63,8 @@ jobs:
 #           sudo docker-compose rm -f backend
 #           sudo docker-compose rm -g frontend
 #           sudo docker pull |
-#             ${{ secrets.DOCKER_USERNAME }}/foodgram_educational_project_backend:latest
-#             ${{ secrets.DOCKER_USERNAME }}/foodgram_educational_project_frontend:v0.1.1
+#             ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:latest
+#             ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:v0.1.1
 #           rm -f .env
 #           touch .env
 #           echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env

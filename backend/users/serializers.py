@@ -4,6 +4,8 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers as s
 from rest_framework.validators import UniqueValidator
 
+from recipe.mixins import GetRecipesFromQueryMixin
+
 User = get_user_model()
 
 
@@ -15,7 +17,7 @@ class FoodgramUserSerializer(UserSerializer):
         user = self.context.get('request').user
         if user.is_authenticated:
             return user.follows.filter(
-                author=obj).exists()
+                id=obj.id).exists()
         return False
 
     class Meta:
@@ -24,7 +26,10 @@ class FoodgramUserSerializer(UserSerializer):
                   'is_subscribed')
 
 
-class FollowsSerializer(FoodgramUserSerializer):
+class FollowsSerializer(
+    GetRecipesFromQueryMixin,
+    FoodgramUserSerializer
+):
     """Сериализация обьектов пользователей при запросе subscriptions."""
     recipes = s.SerializerMethodField()
     recipes_count = s.SerializerMethodField('get_recipescount')
@@ -38,19 +43,13 @@ class FollowsSerializer(FoodgramUserSerializer):
         return obj.user_recipes.count()
 
     def get_recipes(self, obj):
-        from recipe.serializers import RecipeSerializer
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
         queryset = obj.user_recipes.all()
         if limit is not None:
             limit = abs(int(limit))
             queryset = queryset[:limit]
-        return RecipeSerializer(
-            queryset,
-            context={'request': request},
-            fields={'id', 'name', 'image', 'cooking_time'},
-            many=True
-        ).data
+        return self.get_recipes_from_query(queryset, request)
 
 
 class FoodgramUserCreateSerializer(UserCreateSerializer):

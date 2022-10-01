@@ -132,7 +132,7 @@ DJOSER = {
         'current_user': 'users.serializers.FoodgramUserSerializer',
     },
     'PERMISSIONS': {
-        'user': ('foodgram.core.permissions.FoodgramCurrentUserOrAdminOrReadOnly',),
+        'user': ('users.permissions.FoodgramCurrentUserOrAdminOrReadOnly',),
         'user_list': ('rest_framework.permissions.AllowAny',)
     }
 }

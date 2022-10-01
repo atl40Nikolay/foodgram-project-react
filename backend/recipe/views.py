@@ -1,14 +1,21 @@
 from django.db.models import Sum
 from django.http import HttpResponse
-
 from django_filters import rest_framework as filters
-from rest_framework import decorators, response, status, viewsets
+
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Frame, Paragraph
+from rest_framework import decorators, pagination, response, status, viewsets
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from foodgram.core.filters import IngredientFilter, RecipeFilter
-from foodgram.core.permissions import IsAuthorOrAdminOrReadOnly
+from . import conf
+from .filters import IngredientFilter, RecipeFilter
 from .models import Ingredient, Recipe, Tag
+from .permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrReadOnly
 from .serializers import IngredientSerializer, RecipeSerializer, TagsSerializer
 
 
@@ -16,16 +23,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """
     Обработка CRUD для рецептов, также для избранного и корзины покупок.
     """
-    _RECIPE_NAME = 'recipe__name'
-    _INGREDIENT_NAME = 'ingredients_for_recipe__ingredient__name'
-    _MEASUREMENT_UNIT = 'ingredients_for_recipe__ingredient__measurement_unit'
-    _AMOUNT = 'ingredients_for_recipe__amount'
-    _FILENAME = 'shopping_list.txt'
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrAdminOrReadOnly, )
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     @decorators.action(
         detail=True,
@@ -34,21 +39,21 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        if recipe.favorited_recipe.filter(pk=user.id).exists():
-            return response.Response(
-                {'errors': 'Рецепт `{}` уже есть в избранном.'.format(recipe)},
-                status=status.HTTP_400_BAD_REQUEST
+        if not recipe.favorited_recipe.filter(pk=user.id).exists():
+            recipe.favorited_recipe.add(user)
+            serializer = self.get_serializer(
+                recipe,
+                context={'request': request},
+                fields={'id', 'name', 'image', 'cooking_time'},
             )
-        serializer = RecipeSerializer(
-            recipe,
-            context={'request': request},
-            fields={'id', 'name', 'image', 'cooking_time'},
-
-        )
-        recipe.favorited_recipe.add(user)
+            return response.Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
         return response.Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
+            {'errors': conf.ERROR_MESSAGES[
+                'favorite_exists'].format(recipe=recipe)},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     @favorite.mapping.delete
@@ -59,7 +64,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             recipe.favorited_recipe.remove(user)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-            {'errors': 'Этого рецепта ещё (или уже) нет в избранном.'},
+            {'errors': conf.ERROR_MESSAGES[
+                'favorite_is_none'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -70,20 +76,21 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        if recipe.in_shoping_cart.filter(pk=user.id).exists():
-            return response.Response(
-                {'errors': 'Рецепт `{}` уже есть в корзине.'.format(recipe)},
-                status=status.HTTP_400_BAD_REQUEST
+        if not recipe.in_shoping_cart.filter(pk=user.id).exists():
+            recipe.in_shoping_cart.add(user)
+            serializer = self.get_serializer(
+                recipe,
+                context={'request': request},
+                fields={'id', 'name', 'image', 'cooking_time'},
             )
-        serializer = RecipeSerializer(
-            recipe,
-            context={'request': request},
-            fields={'id', 'name', 'image', 'cooking_time'}
-        )
-        recipe.in_shoping_cart.add(user)
+            return response.Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
         return response.Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
+            {'errors': conf.ERROR_MESSAGES[
+                'shoping_item_exists'].format(recipe=recipe)},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     @shopping_cart.mapping.delete
@@ -94,7 +101,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
             recipe.in_shoping_cart.remove(user)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-            {'errors': 'Этого рецепта ещё (или уже) нет в корзине.'},
+            {'errors': conf.ERROR_MESSAGES[
+                'shoping_item_none'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -106,19 +114,19 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """"""
         user = request.user
         recipes = list(
-            user.shoping_cart.all().values_list(self._RECIPE_NAME))
+            user.shoping_cart.all().values_list(conf.RECIPE_NAME))
         if not recipes:
             return response.Response(
-                {'error': 'Корзина покупок пуста.'},
+                {'error': conf.ERROR_MESSAGES['empty_cart']},
                 status=status.HTTP_400_BAD_REQUEST
             )
         ingredients_list = list(Recipe.objects
                                 .filter(shoping_cart__user=user)
                                 .prefetch_related('ingredients')
-                                .order_by(self._INGREDIENT_NAME)
-                                .values_list(self._INGREDIENT_NAME,
-                                             self._MEASUREMENT_UNIT)
-                                .annotate(total=Sum(self._AMOUNT))
+                                .order_by(conf.INGREDIENT_NAME)
+                                .values_list(conf.INGREDIENT_NAME,
+                                             conf.MEASUREMENT_UNIT)
+                                .annotate(total=Sum(conf.AMOUNT))
                                 )
         content = ['Список ингредиентов для {}.\n\n'
                    .format(user.get_full_name())]
@@ -127,26 +135,45 @@ class RecipesViewSet(viewsets.ModelViewSet):
         content += ['\nСписок требуемых для этого ингредиентов:\n']
         content += ['- {0} - {2} ({1}).\n'.format(*item)
                     for item in ingredients_list]
-
-        fileresponse = HttpResponse(
-            content,
-            content_type='text/plain,charset=utf8')
+        pdfmetrics.registerFont(TTFont('DejaVuSerif', 'DejaVuSerif.ttf'))
+        fileresponse = HttpResponse(content_type='application/pdf')
         fileresponse['Content-Disposition'] = ('attachment; filename={0}'
-                                               .format(self._FILENAME))
+                                               .format(conf.FILENAME))
+        page = canvas.Canvas(fileresponse)
+        style = ParagraphStyle('russian_text')
+        style.fontName = 'DejaVuSerif'
+        style.leading = 0.5 * cm
+        for i, part in enumerate(content):
+            content[i] = Paragraph(part.replace('\n', '<br></br>'), style)
+        frame = Frame(
+            0,
+            0,
+            21 * cm,
+            29.7 * cm,
+            leftPadding=cm,
+            bottomPadding=cm,
+            rightPadding=cm,
+            topPadding=cm,
+        )
+        frame.addFromList(content, page)
+        page.showPage()
+        page.save()
         return fileresponse
 
 
-class TagsViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read запросы к tags."""
+class TagsViewSet(viewsets.ModelViewSet):
+    """Запросы к tags."""
     queryset = Tag.objects.all()
     serializer_class = TagsSerializer
-    pagination_class = None
+    pagination_class = pagination.LimitOffsetPagination
+    permission_classes = (IsAdminOrReadOnly, )
 
 
-class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read запросы к ingredients."""
+class IngredientsViewSet(viewsets.ModelViewSet):
+    """Запросы к ingredients."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
+    pagination_class = pagination.LimitOffsetPagination
+    permission_classes = (IsAdminOrReadOnly, )
     filter_backends = (IngredientFilter, )
     search_fields = ('^name', )

@@ -37,7 +37,7 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return bool(self.is_superuser or (self.is_staff))
+        return bool(self.is_superuser or self.is_staff)
 
     class Meta:
         ordering = ("id",)

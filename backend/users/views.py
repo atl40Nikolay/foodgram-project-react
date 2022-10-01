@@ -4,6 +4,7 @@ from djoser import views
 from rest_framework import decorators, response, status
 from rest_framework.permissions import IsAuthenticated
 
+from .conf import ERROR_MESSAGES
 from .serializers import FollowsSerializer, FoodgramUserSerializer
 
 User = get_user_model()
@@ -45,12 +46,14 @@ class FoodgramUserViewSet(views.UserViewSet):
         user = request.user
         if author == user:
             return response.Response(
-                {'errors': 'Подписка на себя невозможна.'},
+                {'errors': ERROR_MESSAGES[
+                    'is_self_subscribe'].format(user=user)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         if user.follows.filter(pk=author.id).exists():
             return response.Response(
-                {'errors': 'Вы уже подписаны на {}.'.format(author)},
+                {'errors': ERROR_MESSAGES[
+                    'unique_subscription'].format(author=author, user=user)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         serializer = self.serializer_class_follow(
@@ -67,10 +70,16 @@ class FoodgramUserViewSet(views.UserViewSet):
     def unsubscribe(self, request, id=None):
         user = request.user
         author = get_object_or_404(User, pk=id)
+        if author == user:
+            return response.Response(
+                {'errors': ERROR_MESSAGES['is_self_unsubscribe']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         if user.follows.filter(pk=author.id).exists():
             user.follows.remove(author)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-            {'errors': 'Вы уже отписались от {}.'.format(author)},
+            {'errors': ERROR_MESSAGES[
+                'subscription_delete_null'].format(author=author, user=user)},
             status=status.HTTP_400_BAD_REQUEST
         )

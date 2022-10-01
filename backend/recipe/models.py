@@ -4,15 +4,21 @@ from django.db import models
 
 from colorfield.fields import ColorField
 
+from .conf import CONSTRAINT_VALUES
+
 User = get_user_model()
 
 
-CONSTRAINT_VALUES = {
-    'MIN_COOKING_TIME': 1,
-    'MIN_AMOUNT': 1,
-    'MAX_NAMES_LENGTH': 200,
-    'MAX_TEXT_LENGTH': 500,
-}
+# А если я в recipe.conf вынесу, это лучше будет? Или куда тогда?
+# Обусловлено наличием числовых констант в коде, что вроде низзя)
+# Изначально я каждую в свои модели прописывал, но потом решил
+# объединить для наглядности.
+# CONSTRAINT_VALUES = {
+#     'MIN_COOKING_TIME': 1,
+#     'MIN_AMOUNT': 1,
+#     'MAX_NAMES_LENGTH': 200,
+#     'MAX_TEXT_LENGTH': 500,
+# }
 
 
 class Tag(models.Model):
@@ -53,6 +59,11 @@ class Tag(models.Model):
         return self.name
 
 
+# --class Ingredient(models.Model):
+# --Явно не хватает промежуточных моделей для сущностей создаваемых
+# --отдельно под те или иные рецепты)
+# У меня есть through модель IngredientsAmount, она одновременно связывает
+# Ingredient и Recipe и хранит количество amount
 class Ingredient(models.Model):
     name = models.CharField(
         'название ингредиента',
@@ -192,8 +203,8 @@ class IngredientsAmount(models.Model):
     )
 
     class Meta:
-        verbose_name = 'ингредиент'
-        verbose_name_plural = 'ингредиенты'
+        verbose_name = 'ингредиент для рецепта'
+        verbose_name_plural = 'ингредиенты для рецепта'
         constraints = [
             models.UniqueConstraint(
                 fields=['ingredient', 'recipe'],
@@ -207,8 +218,9 @@ class IngredientsAmount(models.Model):
         ]
 
     def __str__(self):
-        return (f'{self.ingredient.name} - {self.amount} '
-                '({self.ingredient.measurement_unit})')
+        return (f'Ингредиент для рецепта {self.recipe}: '
+                f'{self.ingredient} - {self.amount} '
+                f'({self.ingredient.measurement_unit})')
 
 
 class FavoriteRecipes(models.Model):

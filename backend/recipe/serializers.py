@@ -1,12 +1,16 @@
+from django.contrib.auth import get_user_model
+
 from drf_extra_fields.fields import Base64ImageField
 from drf_extra_fields.relations import PresentablePrimaryKeyRelatedField
 from rest_framework import serializers as s
 
-from foodgram.core.conf import DEFAULT_ERROR_MESSAGES
-from foodgram.core.mixins import DynamicFieldsMixin
-from users.serializers import FoodgramUserSerializer
+from .conf import ERROR_MESSAGES
+from .mixins import DynamicFieldsMixin
 from .models import (FavoriteRecipes, Ingredient, IngredientsAmount, Recipe,
                      ShopingCart, Tag)
+from users.serializers import FoodgramUserSerializer
+
+User = get_user_model()
 
 
 class TagsSerializer(s.ModelSerializer):
@@ -14,7 +18,6 @@ class TagsSerializer(s.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
-        read_only_fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(s.ModelSerializer):
@@ -22,7 +25,6 @@ class IngredientSerializer(s.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
-        read_only_fields = ('id', 'name', 'measurement_unit')
 
 
 class IngredientAmountSerializer(s.ModelSerializer):
@@ -49,8 +51,10 @@ class IngredientAmountSerializer(s.ModelSerializer):
 
 class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
     """Сериализация запросов к recipes"""
-    author = FoodgramUserSerializer(
-        read_only=True,
+    author = PresentablePrimaryKeyRelatedField(
+        presentation_serializer=FoodgramUserSerializer,
+        read_source=None,
+        read_only=True
     )
     ingredients = IngredientAmountSerializer(
         many=True,
@@ -69,7 +73,7 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
     is_favorited = s.SerializerMethodField()
     is_in_shoping_cart = s.SerializerMethodField()
 
-    default_error_messages = DEFAULT_ERROR_MESSAGES
+    default_error_messages = ERROR_MESSAGES
 
     class Meta:
         model = Recipe
@@ -128,10 +132,10 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients_for_recipe')
         tags = validated_data.pop('tags')
-        image = validated_data.pop('image')
+        # image = validated_data.pop('image')
         recipe = Recipe.objects.create(
-            author=self.context.get('request').user,
-            image=image,
+            # author=self.context.get('request').user,
+            # image=image,
             **validated_data
         )
         recipe.tags.set(tags)
