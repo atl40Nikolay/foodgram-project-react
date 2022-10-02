@@ -4,21 +4,14 @@ from django.db import models
 
 from colorfield.fields import ColorField
 
-from .conf import CONSTRAINT_VALUES
 
 User = get_user_model()
 
-
-# А если я в recipe.conf вынесу, это лучше будет? Или куда тогда?
-# Обусловлено наличием числовых констант в коде, что вроде низзя)
-# Изначально я каждую в свои модели прописывал, но потом решил
-# объединить для наглядности.
-# CONSTRAINT_VALUES = {
-#     'MIN_COOKING_TIME': 1,
-#     'MIN_AMOUNT': 1,
-#     'MAX_NAMES_LENGTH': 200,
-#     'MAX_TEXT_LENGTH': 500,
-# }
+# Оставил здесь, т.к. константы несколько раз повотряются, хорошо?
+MIN_AMOUNT = 1
+MIN_COOKING_TIME = 1
+MAX_NAMES_LENGTH = 200
+MAX_TEXT_LENGTH = 500
 
 
 class Tag(models.Model):
@@ -35,7 +28,7 @@ class Tag(models.Model):
     name = models.CharField(
         'название тэга',
         unique=True,
-        max_length=CONSTRAINT_VALUES.get('MAX_NAMES_LENGTH'),
+        max_length=MAX_NAMES_LENGTH,
         help_text='Название.',
     )
     color = ColorField(
@@ -47,7 +40,7 @@ class Tag(models.Model):
     slug = models.SlugField(
         'уникальный слаг',
         unique=True,
-        max_length=CONSTRAINT_VALUES.get('MAX_NAMES_LENGTH'),
+        max_length=MAX_NAMES_LENGTH,
         help_text='Машинное имя.',
     )
 
@@ -59,20 +52,15 @@ class Tag(models.Model):
         return self.name
 
 
-# --class Ingredient(models.Model):
-# --Явно не хватает промежуточных моделей для сущностей создаваемых
-# --отдельно под те или иные рецепты)
-# У меня есть through модель IngredientsAmount, она одновременно связывает
-# Ingredient и Recipe и хранит количество amount
 class Ingredient(models.Model):
     name = models.CharField(
         'название ингредиента',
-        max_length=CONSTRAINT_VALUES.get('MAX_NAMES_LENGTH'),
+        max_length=MAX_NAMES_LENGTH,
         help_text='Название ингредиента.',
     )
     measurement_unit = models.CharField(
         'единица измерения',
-        max_length=CONSTRAINT_VALUES.get('MAX_NAMES_LENGTH'),
+        max_length=MAX_NAMES_LENGTH,
         help_text='Единица измерения.',
     )
 
@@ -102,17 +90,16 @@ class Recipe(models.Model):
     name = models.CharField(
         'название рецепта',
         unique=True,
-        max_length=CONSTRAINT_VALUES.get('MAX_NAMES_LENGTH'),
+        max_length=MAX_NAMES_LENGTH,
         help_text='Название рецепта.',
     )
     image = models.ImageField(
         'изображение: ммм нямка!',
-        upload_to='recipes/',
         help_text='Изображение: ммм нямка!',
     )
     text = models.TextField(
         'описание рецепта',
-        max_length=CONSTRAINT_VALUES.get('MAX_TEXT_LENGTH'),
+        max_length=MAX_TEXT_LENGTH,
         help_text='Описание рецепта.',
     )
     ingredients = models.ManyToManyField(
@@ -146,9 +133,9 @@ class Recipe(models.Model):
         'время приготовления (в минутах)',
         validators=[
             validators.MinValueValidator(
-                CONSTRAINT_VALUES.get('MIN_COOKING_TIME'),
+                MIN_COOKING_TIME,
                 'Время приготовления не может быть меньше чем {} мин.'
-                .format(CONSTRAINT_VALUES.get('MIN_COOKING_TIME'))
+                .format(MIN_COOKING_TIME)
             )
         ],
         help_text='Время приготовления рецепта(мин).',
@@ -166,9 +153,8 @@ class Recipe(models.Model):
         verbose_name_plural = 'рецепты'
         constraints = [
             models.CheckConstraint(
-                check=models.Q(
-                    cooking_time__gte=CONSTRAINT_VALUES.get('MIN_COOKING_TIME')
-                ), name='cooking_time_min_constraint'
+                check=models.Q(cooking_time__gte=MIN_COOKING_TIME),
+                name='cooking_time_min_constraint'
             ),
         ]
 
@@ -193,12 +179,8 @@ class IngredientsAmount(models.Model):
     )
     amount = models.PositiveIntegerField(
         'количество продукта',
-        default=CONSTRAINT_VALUES.get('MIN_AMOUNT'),
-        validators=[
-            validators.MinValueValidator(
-                CONSTRAINT_VALUES.get('MIN_AMOUNT')
-            )
-        ],
+        default=MIN_AMOUNT,
+        validators=[validators.MinValueValidator(MIN_AMOUNT)],
         help_text='Количество.',
     )
 
@@ -211,9 +193,8 @@ class IngredientsAmount(models.Model):
                 name='ingredients_in_recipe_unique_constraint'
             ),
             models.CheckConstraint(
-                check=models.Q(
-                    amount__gte=CONSTRAINT_VALUES.get('MIN_AMOUNT')
-                ), name='amount_min_constraint'
+                check=models.Q(amount__gte=MIN_AMOUNT),
+                name='amount_min_constraint'
             ),
         ]
 

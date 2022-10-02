@@ -41,25 +41,23 @@ class RecipeFilter(filters.FilterSet):
             return queryset
         if name == 'is_in_shopping_cart':
             if value is True:
-                queryset = queryset.filter(
+                return queryset.filter(
                     shoping_cart__user=self.request.user
                 )
             else:
-                queryset = queryset.exclude(
+                return queryset.exclude(
                     shoping_cart__user=self.request.user
                 )
         elif name == 'is_favorited':
             if value is True:
-                queryset = queryset.filter(
+                return queryset.filter(
                     favorite_recipes__user=self.request.user
                 )
             else:
-                queryset = queryset.exclude(
+                return queryset.exclude(
                     favorite_recipes__user=self.request.user
                 )
-        else:
-            return queryset  # Ошибка flake R503 либо
-        return queryset  # Ошибка flake R504, видимо некорректная?
+        return queryset
 
     class Meta:
         model = Recipe

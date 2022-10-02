@@ -22,12 +22,9 @@ services:
 
   backend:
     image: atl40/foodgram_backend:latest
-    # build:
-    #   context: ../backend
-    #   dockerfile: Dockerfile
     restart: always
     volumes:
-      - static_value:/code/static/
+      - static_value:/code/backend_static/
       - media_value:/code/media/
     depends_on:
       - db
@@ -36,6 +33,7 @@ services:
 
   nginx:
     image: nginx:1.19.3
+    restart: always
     ports:
       - 80:80
     volumes:
@@ -43,10 +41,9 @@ services:
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/redoc.html:/usr/share/nginx/html/api/docs/redoc.html
       - ../docs/openapi-schema.yml:/usr/share/nginx/html/api/docs/openapi-schema.yml
-      - static_value:/var/html/static/
+      - static_value:/var/html/backend_static/
       - media_value:/var/html/media/
     depends_on:
-      # - frontend
       - backend
 
 
@@ -59,6 +56,14 @@ services:
 #       - db:/var/lib/postgresql/data/
 #     env_file:
 #       - ./.env
+
+#   frontend:
+#     image: atl40/foodgram_educational_project_frontend:v0.1.0
+#     volumes:
+#       - ../frontend/:/app/result_build/
+#     depends_on:
+#       - db 
+#       - backend
   
 #   backend:
 #     image: atl40/foodgram_educational_project_backend:latest
@@ -71,13 +76,6 @@ services:
 #     env_file:
 #       - ./.env
 
-#   frontend:
-#     image: atl40/foodgram_educational_project_frontend:v0.1.0
-#     volumes:
-#       - ../frontend/:/app/result_build/
-#     depends_on:
-#       - db 
-#       - backend
 
 #   nginx:
 #     image: nginx:1.19.3

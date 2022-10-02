@@ -1,24 +1,35 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from rest_framework.authtoken.models import Token
+
+MAX_EMAIL_LENGTH = 254
+MAX_NAMES_LENGTH = 150
+
+
+class MyToken(Token):
+    class Meta:
+        proxy = True
+        verbose_name = 'токен'
+        verbose_name_plural = 'токены'
 
 
 class User(AbstractUser):
     """Кастомный класс для User."""
     email = models.EmailField(
         'электронная почта',
-        max_length=254,
+        max_length=MAX_EMAIL_LENGTH,
         unique=True,
         blank=False,
         help_text='Адрес электронной почты.',
     )
     first_name = models.CharField(
         'имя',
-        max_length=150,
+        max_length=MAX_NAMES_LENGTH,
         help_text='Имя.'
     )
     last_name = models.CharField(
         'фамилия',
-        max_length=150,
+        max_length=MAX_NAMES_LENGTH,
         help_text='Фамилия.'
     )
     follows = models.ManyToManyField(

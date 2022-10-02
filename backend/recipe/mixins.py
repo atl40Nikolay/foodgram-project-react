@@ -1,5 +1,3 @@
-# from django.shortcuts import get_object_or_404
-# from rest_framework import response
 from rest_framework import serializers
 
 from recipe.models import Recipe

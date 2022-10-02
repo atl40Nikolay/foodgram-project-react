@@ -5,20 +5,19 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=os.path.join(os.getcwd(), 'infra', '.env'))
 
-DEBUG = True
+DEBUG = False
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', default='some_secret_key')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '127.0.0.1:8000', 'backend:8000', 'backend', ]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='localhost').split()
 
 AUTH_USER_MODEL = 'users.User'
 
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -67,12 +66,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': 'mydatabase',
-#     }
-# }
 DATABASES = {
     'default': {
         'ENGINE': os.getenv(
@@ -115,8 +108,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = '/backend_static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'backend_static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -136,6 +129,7 @@ DJOSER = {
         'user_list': ('rest_framework.permissions.AllowAny',)
     }
 }
+
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
@@ -146,5 +140,5 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'foodgram.core.pagination.FoodgramPagination',
+    'DEFAULT_PAGINATION_CLASS': 'recipe.pagination.FoodgramPagination',
 }

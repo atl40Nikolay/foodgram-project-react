@@ -4,7 +4,6 @@ from djoser import views
 from rest_framework import decorators, response, status
 from rest_framework.permissions import IsAuthenticated
 
-from .conf import ERROR_MESSAGES
 from .serializers import FollowsSerializer, FoodgramUserSerializer
 
 User = get_user_model()
@@ -18,6 +17,15 @@ class FoodgramUserViewSet(views.UserViewSet):
     queryset = User.objects.all()
     serializer_class = FoodgramUserSerializer
     serializer_class_follow = FollowsSerializer
+    error_messages = {
+        'is_self_subscribe': ('Дорогой {user}, подписка на себя самого '
+                              'невозможна.'),
+        'is_self_unsubscribe': ('Отписка от самого себя не должна была '
+                                'случиться, но если это произошло, '
+                                'знайте - это невозможно.'),
+        'unique_subscription': 'Вы ({user}) уже подписаны на {author}.',
+        'subscription_delete_null': 'Вы ({user}) уже отписаны от {author}.',
+    }
 
     @decorators.action(
         detail=False,
@@ -46,13 +54,13 @@ class FoodgramUserViewSet(views.UserViewSet):
         user = request.user
         if author == user:
             return response.Response(
-                {'errors': ERROR_MESSAGES[
+                {'errors': self.error_messages[
                     'is_self_subscribe'].format(user=user)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         if user.follows.filter(pk=author.id).exists():
             return response.Response(
-                {'errors': ERROR_MESSAGES[
+                {'errors': self.error_messages[
                     'unique_subscription'].format(author=author, user=user)},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -61,6 +69,7 @@ class FoodgramUserViewSet(views.UserViewSet):
             context={'request': request}
         )
         user.follows.add(author)
+        user.save()
         return response.Response(
             serializer.data,
             status=status.HTTP_201_CREATED
@@ -72,14 +81,14 @@ class FoodgramUserViewSet(views.UserViewSet):
         author = get_object_or_404(User, pk=id)
         if author == user:
             return response.Response(
-                {'errors': ERROR_MESSAGES['is_self_unsubscribe']},
+                {'errors': self.error_messages['is_self_unsubscribe']},
                 status=status.HTTP_400_BAD_REQUEST
             )
         if user.follows.filter(pk=author.id).exists():
             user.follows.remove(author)
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-            {'errors': ERROR_MESSAGES[
+            {'errors': self.error_messages[
                 'subscription_delete_null'].format(author=author, user=user)},
             status=status.HTTP_400_BAD_REQUEST
         )

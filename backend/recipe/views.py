@@ -1,6 +1,7 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django_filters import rest_framework as filters
+from django.shortcuts import get_object_or_404
 
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
@@ -9,10 +10,9 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Frame, Paragraph
 from rest_framework import decorators, pagination, response, status, viewsets
-from rest_framework.generics import get_object_or_404
+
 from rest_framework.permissions import IsAuthenticated
 
-from . import conf
 from .filters import IngredientFilter, RecipeFilter
 from .models import Ingredient, Recipe, Tag
 from .permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrReadOnly
@@ -28,6 +28,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrAdminOrReadOnly, )
+    error_messages = {
+        'favorite_exists': 'Рецепт `{recipe}` уже есть в избранном.',
+        'favorite_is_none': ('Рецепт `{recipe}` уже отсутствует '
+                             'в избранном.'),
+        'shoping_item_exists': 'Рецепт `{recipe}` уже есть в корзине.',
+        'shoping_item_none': 'Рецепт `{recipe}` уже удалён из корзины.',
+        'empty_cart': 'Корзина покупок пуста.',
+
+    }
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -41,6 +50,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         user = request.user
         if not recipe.favorited_recipe.filter(pk=user.id).exists():
             recipe.favorited_recipe.add(user)
+            recipe.save()
             serializer = self.get_serializer(
                 recipe,
                 context={'request': request},
@@ -51,7 +61,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED
             )
         return response.Response(
-            {'errors': conf.ERROR_MESSAGES[
+            {'errors': self.error_messages[
                 'favorite_exists'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -62,9 +72,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         user = request.user
         if recipe.favorited_recipe.filter(pk=user.id).exists():
             recipe.favorited_recipe.remove(user)
+            recipe.save()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-            {'errors': conf.ERROR_MESSAGES[
+            {'errors': self.error_messages[
                 'favorite_is_none'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -78,6 +89,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         user = request.user
         if not recipe.in_shoping_cart.filter(pk=user.id).exists():
             recipe.in_shoping_cart.add(user)
+            recipe.save()
             serializer = self.get_serializer(
                 recipe,
                 context={'request': request},
@@ -88,7 +100,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED
             )
         return response.Response(
-            {'errors': conf.ERROR_MESSAGES[
+            {'errors': self.error_messages[
                 'shoping_item_exists'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -99,9 +111,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         user = request.user
         if recipe.in_shoping_cart.filter(pk=user.id).exists():
             recipe.in_shoping_cart.remove(user)
+            recipe.save()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
-            {'errors': conf.ERROR_MESSAGES[
+            {'errors': self.error_messages[
                 'shoping_item_none'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -111,22 +124,27 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated]
     )
     def download_shopping_cart(self, request):
-        """"""
+        recipe_name = 'recipe__name'
+        ingredient_name = 'ingredients_for_recipe__ingredient__name'
+        measurement_unit = ('ingredients_for_recipe__'
+                            'ingredient__measurement_unit')
+        amount = 'ingredients_for_recipe__amount'
+        filename = 'shopping_list.pdf'
         user = request.user
         recipes = list(
-            user.shoping_cart.all().values_list(conf.RECIPE_NAME))
+            user.shoping_cart.all().values_list(recipe_name))
         if not recipes:
             return response.Response(
-                {'error': conf.ERROR_MESSAGES['empty_cart']},
+                {'error': self.error_messages['empty_cart']},
                 status=status.HTTP_400_BAD_REQUEST
             )
         ingredients_list = list(Recipe.objects
                                 .filter(shoping_cart__user=user)
                                 .prefetch_related('ingredients')
-                                .order_by(conf.INGREDIENT_NAME)
-                                .values_list(conf.INGREDIENT_NAME,
-                                             conf.MEASUREMENT_UNIT)
-                                .annotate(total=Sum(conf.AMOUNT))
+                                .order_by(ingredient_name)
+                                .values_list(ingredient_name,
+                                             measurement_unit)
+                                .annotate(total=Sum(amount))
                                 )
         content = ['Список ингредиентов для {}.\n\n'
                    .format(user.get_full_name())]
@@ -138,7 +156,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
         pdfmetrics.registerFont(TTFont('DejaVuSerif', 'DejaVuSerif.ttf'))
         fileresponse = HttpResponse(content_type='application/pdf')
         fileresponse['Content-Disposition'] = ('attachment; filename={0}'
-                                               .format(conf.FILENAME))
+                                               .format(filename))
         page = canvas.Canvas(fileresponse)
         style = ParagraphStyle('russian_text')
         style.fontName = 'DejaVuSerif'

@@ -10,14 +10,14 @@ class IngredientsInline(admin.TabularInline):
 
 
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'slug', 'color')
     empty_value_display = "-пусто-"
 
 
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'measurement_unit')
     list_filter = ('name',)
-    list_max_show_all = 200
+    search_fields = ('name', )
+    list_max_show_all = 100
     empty_value_display = "-пусто-"
 
 
@@ -39,9 +39,17 @@ class RecipeAdmin(admin.ModelAdmin):
         return obj.favorite_recipes.count()
 
 
+class FavoriteRecipesAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'recipe')
+
+
+class ShopingCartAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'recipe')
+
+
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(IngredientsAmount)
-admin.site.register(FavoriteRecipes)
-admin.site.register(ShopingCart)
+admin.site.register(FavoriteRecipes, FavoriteRecipesAdmin)
+admin.site.register(ShopingCart, ShopingCartAdmin)

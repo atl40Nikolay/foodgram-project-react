@@ -4,10 +4,8 @@ from drf_extra_fields.fields import Base64ImageField
 from drf_extra_fields.relations import PresentablePrimaryKeyRelatedField
 from rest_framework import serializers as s
 
-from .conf import ERROR_MESSAGES
 from .mixins import DynamicFieldsMixin
-from .models import (FavoriteRecipes, Ingredient, IngredientsAmount, Recipe,
-                     ShopingCart, Tag)
+from .models import Ingredient, IngredientsAmount, Recipe, Tag
 from users.serializers import FoodgramUserSerializer
 
 User = get_user_model()
@@ -73,7 +71,13 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
     is_favorited = s.SerializerMethodField()
     is_in_shoping_cart = s.SerializerMethodField()
 
-    default_error_messages = ERROR_MESSAGES
+    default_error_messages = {
+        'incorrect_type': ('Некорректный тип {input_obj}. Ожидается '
+                           '{input_expected}, в запросе {input_type}.'),
+        'empty_list': 'Поле {input_obj} не может быть пустым.',
+        'unique_item': ('Значения {input_obj} должны быть уникальными '
+                        'для одного рецепта.'),
+    }
 
     class Meta:
         model = Recipe
@@ -86,13 +90,14 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return FavoriteRecipes.objects.filter(user=user, recipe=obj).exists()
+        return obj.favorited_recipe.filter(pk=user.id).exists()
+        # return FavoriteRecipes.objects.filter(user=user, recipe=obj).exists()
 
     def get_is_in_shoping_cart(self, obj):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return ShopingCart.objects.filter(user=user, recipe=obj).exists()
+        return obj.in_shoping_cart.filter(pk=user.id).exists()
 
     def validate(self, attrs):
         ingredients_data = self.initial_data.get('ingredients')
@@ -106,13 +111,13 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
             )
         if len(ingredients_data) == 0:
             self.fail(
-                'empty',
+                'empty_list',
                 input_obj='ingredients'
             )
         ingredients_data = [ing['id'] for ing in ingredients_data]
         if len(ingredients_data) != len(set(ingredients_data)):
             self.fail(
-                'unique',
+                'unique_item',
                 input_obj='ingredients'
             )
         if type(tags_data) not in (list, tuple):
@@ -124,7 +129,7 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
             )
         if len(tags_data) != len(set(tags_data)):
             self.fail(
-                'unique',
+                'unique_item',
                 input_obj='tags'
             )
         return super().validate(attrs)
@@ -132,10 +137,7 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients_for_recipe')
         tags = validated_data.pop('tags')
-        # image = validated_data.pop('image')
         recipe = Recipe.objects.create(
-            # author=self.context.get('request').user,
-            # image=image,
             **validated_data
         )
         recipe.tags.set(tags)
