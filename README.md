@@ -64,8 +64,232 @@ docker-compose exec backend python manage.py createsuperuser
 ```
 docker-compose exec backend python manage.py collectstatic --noinput
 ```
+### Примеры запросов и ответов:
+- Список пользователей
+GET запрос
+```
+http://localhost/api/users/
+```
+код ответа 200
+```
+{
+  "count": 123,
+  "next": "http://localhost/api/users/?page=4",
+  "previous": "http://localhost/api/users/?page=2",
+  "results": [
+    {
+      "email": "user@example.com",
+      "id": 0,
+      "username": "string",
+      "first_name": "Вася",
+      "last_name": "Пупкин",
+      "is_subscribed": false
+    }
+  ]
+}
+```
 
-### Документация, примеры запросов и ответов:
+- Регистрация пользователя
+POST запрос
+```
+http://localhost/api/users/
+```
+```
+{
+  "email": "vpupkin@yandex.ru",
+  "username": "vasya.pupkin",
+  "first_name": "Вася",
+  "last_name": "Пупкин",
+  "password": "Qwerty123"
+}
+```
+код ответа 201
+```
+{
+  "email": "vpupkin@yandex.ru",
+  "id": 0,
+  "username": "vasya.pupkin",
+  "first_name": "Вася",
+  "last_name": "Пупкин"
+}
+```
+код ответа 400
+```
+{
+  "field_name": [
+    "Обязательное поле."
+  ]
+}
+```
+
+- Профиль пользователя
+GET запрос
+```
+http://localhost/api/users/{id}/
+```
+код ответа 200
+```
+{
+  "email": "user@example.com",
+  "id": 0,
+  "username": "string",
+  "first_name": "Вася",
+  "last_name": "Пупкин",
+  "is_subscribed": false
+}
+```
+код ответа 404
+```
+{
+  "detail": "Страница не найдена."
+}
+```
+
+- Текущий пользователь
+GET запрос
+```
+http://localhost/api/users/me/
+```
+код ответа 200
+```
+{
+  "email": "user@example.com",
+  "id": 0,
+  "username": "string",
+  "first_name": "Вася",
+  "last_name": "Пупкин",
+  "is_subscribed": false
+}
+```
+код ответа 401
+```
+{
+  "detail": "Учетные данные не были предоставлены."
+}
+```
+
+- Получить токен авторизации
+POST запрос
+```
+http://localhost/api/auth/token/login/
+```
+```
+{
+  "password": "string",
+  "email": "string"
+}
+```
+код ответа 201
+```
+{
+  "auth_token": "string"
+}
+```
+
+- Удаление токена
+POST запрос
+```
+http://localhost/api/auth/token/logout/
+```
+код ответа 204
+```
+null
+```
+код ответа 401
+```
+{
+  "detail": "Учетные данные не были предоставлены."
+}
+```
+
+- Cписок тегов
+GET запрос
+```
+http://localhost/api/tags/
+```
+код ответа 200
+```
+[
+  {
+    "id": 0,
+    "name": "Завтрак",
+    "color": "#E26C2D",
+    "slug": "breakfast"
+  }
+]
+```
+
+- Получение тега
+GET запрос
+```
+http://localhost/api/tags/{id}/
+```
+код ответа 200
+```
+{
+  "id": 0,
+  "name": "Завтрак",
+  "color": "#E26C2D",
+  "slug": "breakfast"
+}
+```
+код ответа 404
+```
+{
+  "detail": "Страница не найдена."
+}
+```
+
+- Список рецептов
+GET запрос
+```
+http://localhost/api/recipes/
+```
+код ответа 200
+```
+{
+  "count": 123,
+  "next": "http://localhost/api/recipes/?page=4",
+  "previous": "http://localhost/api/recipes/?page=2",
+  "results": [
+    {
+      "id": 0,
+      "tags": [
+        {
+          "id": 0,
+          "name": "Завтрак",
+          "color": "#E26C2D",
+          "slug": "breakfast"
+        }
+      ],
+      "author": {
+        "email": "user@example.com",
+        "id": 0,
+        "username": "string",
+        "first_name": "Вася",
+        "last_name": "Пупкин",
+        "is_subscribed": false
+      },
+      "ingredients": [
+        {
+          "id": 0,
+          "name": "Картофель отварной",
+          "measurement_unit": "г",
+          "amount": 1
+        }
+      ],
+      "is_favorited": true,
+      "is_in_shopping_cart": true,
+      "name": "string",
+      "image": "http://localhost/media/images/image.jpeg",
+      "text": "string",
+      "cooking_time": 1
+    }
+  ]
+}
+```
+
+### Документация:
 
 Обратившись к эндпоинту api/docs/, вы можете ознакомиться с документацией сервиса, посмотреть доступные варианты api-запросов к серверу и его ответов.
 

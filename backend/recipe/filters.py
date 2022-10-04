@@ -42,11 +42,11 @@ class RecipeFilter(filters.FilterSet):
         if name == 'is_in_shopping_cart':
             if value is True:
                 return queryset.filter(
-                    shoping_cart__user=self.request.user
+                    shopping_cart__user=self.request.user
                 )
             else:
                 return queryset.exclude(
-                    shoping_cart__user=self.request.user
+                    shopping_cart__user=self.request.user
                 )
         elif name == 'is_favorited':
             if value is True:

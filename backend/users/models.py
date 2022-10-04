@@ -2,11 +2,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from rest_framework.authtoken.models import Token
 
-MAX_EMAIL_LENGTH = 254
-MAX_NAMES_LENGTH = 150
-
 
 class MyToken(Token):
+
     class Meta:
         proxy = True
         verbose_name = 'токен'
@@ -15,6 +13,8 @@ class MyToken(Token):
 
 class User(AbstractUser):
     """Кастомный класс для User."""
+    MAX_EMAIL_LENGTH = 254
+    MAX_NAMES_LENGTH = 150
     email = models.EmailField(
         'электронная почта',
         max_length=MAX_EMAIL_LENGTH,

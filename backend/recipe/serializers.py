@@ -69,7 +69,7 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
         use_url=True,
     )
     is_favorited = s.SerializerMethodField()
-    is_in_shoping_cart = s.SerializerMethodField()
+    is_in_shopping_cart = s.SerializerMethodField()
 
     default_error_messages = {
         'incorrect_type': ('Некорректный тип {input_obj}. Ожидается '
@@ -83,7 +83,7 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
         model = Recipe
         depth = 1
         fields = ['id', 'tags', 'author', 'ingredients', 'is_favorited',
-                  'is_in_shoping_cart', 'name', 'image', 'text',
+                  'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time']
 
     def get_is_favorited(self, obj):
@@ -93,11 +93,11 @@ class RecipeSerializer(DynamicFieldsMixin, s.ModelSerializer):
         return obj.favorited_recipe.filter(pk=user.id).exists()
         # return FavoriteRecipes.objects.filter(user=user, recipe=obj).exists()
 
-    def get_is_in_shoping_cart(self, obj):
+    def get_is_in_shopping_cart(self, obj):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
-        return obj.in_shoping_cart.filter(pk=user.id).exists()
+        return obj.in_shopping_cart.filter(pk=user.id).exists()
 
     def validate(self, attrs):
         ingredients_data = self.initial_data.get('ingredients')

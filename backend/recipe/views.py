@@ -32,8 +32,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
         'favorite_exists': 'Рецепт `{recipe}` уже есть в избранном.',
         'favorite_is_none': ('Рецепт `{recipe}` уже отсутствует '
                              'в избранном.'),
-        'shoping_item_exists': 'Рецепт `{recipe}` уже есть в корзине.',
-        'shoping_item_none': 'Рецепт `{recipe}` уже удалён из корзины.',
+        'shopping_item_exists': 'Рецепт `{recipe}` уже есть в корзине.',
+        'shopping_item_none': 'Рецепт `{recipe}` уже удалён из корзины.',
         'empty_cart': 'Корзина покупок пуста.',
 
     }
@@ -87,8 +87,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        if not recipe.in_shoping_cart.filter(pk=user.id).exists():
-            recipe.in_shoping_cart.add(user)
+        if not recipe.in_shopping_cart.filter(pk=user.id).exists():
+            recipe.in_shopping_cart.add(user)
             recipe.save()
             serializer = self.get_serializer(
                 recipe,
@@ -101,21 +101,21 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
         return response.Response(
             {'errors': self.error_messages[
-                'shoping_item_exists'].format(recipe=recipe)},
+                'shopping_item_exists'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
     @shopping_cart.mapping.delete
-    def delete_from_shoping_cart(self, request, pk=None):
+    def delete_from_shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        if recipe.in_shoping_cart.filter(pk=user.id).exists():
-            recipe.in_shoping_cart.remove(user)
+        if recipe.in_shopping_cart.filter(pk=user.id).exists():
+            recipe.in_shopping_cart.remove(user)
             recipe.save()
             return response.Response(status=status.HTTP_204_NO_CONTENT)
         return response.Response(
             {'errors': self.error_messages[
-                'shoping_item_none'].format(recipe=recipe)},
+                'shopping_item_none'].format(recipe=recipe)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -132,14 +132,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
         filename = 'shopping_list.pdf'
         user = request.user
         recipes = list(
-            user.shoping_cart.all().values_list(recipe_name))
+            user.shopping_cart.all().values_list(recipe_name))
         if not recipes:
             return response.Response(
                 {'error': self.error_messages['empty_cart']},
                 status=status.HTTP_400_BAD_REQUEST
             )
         ingredients_list = list(Recipe.objects
-                                .filter(shoping_cart__user=user)
+                                .filter(shopping_cart__user=user)
                                 .prefetch_related('ingredients')
                                 .order_by(ingredient_name)
                                 .values_list(ingredient_name,

@@ -7,14 +7,9 @@ from colorfield.fields import ColorField
 
 User = get_user_model()
 
-# Оставил здесь, т.к. константы несколько раз повотряются, хорошо?
-MIN_AMOUNT = 1
-MIN_COOKING_TIME = 1
-MAX_NAMES_LENGTH = 200
-MAX_TEXT_LENGTH = 500
-
 
 class Tag(models.Model):
+    TAG_MAX_NAMES_LENGTH = 200
     COLORS = (
         ('R', '#FF0000'),
         ('O', '#FFA500'),
@@ -28,7 +23,7 @@ class Tag(models.Model):
     name = models.CharField(
         'название тэга',
         unique=True,
-        max_length=MAX_NAMES_LENGTH,
+        max_length=TAG_MAX_NAMES_LENGTH,
         help_text='Название.',
     )
     color = ColorField(
@@ -40,7 +35,7 @@ class Tag(models.Model):
     slug = models.SlugField(
         'уникальный слаг',
         unique=True,
-        max_length=MAX_NAMES_LENGTH,
+        max_length=TAG_MAX_NAMES_LENGTH,
         help_text='Машинное имя.',
     )
 
@@ -53,14 +48,16 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
+    INGREDIENT_MAX_NAME_LENGTH = 200
+    MEASUREMENT_UNIT_MAX_LENGTH = 200
     name = models.CharField(
         'название ингредиента',
-        max_length=MAX_NAMES_LENGTH,
+        max_length=INGREDIENT_MAX_NAME_LENGTH,
         help_text='Название ингредиента.',
     )
     measurement_unit = models.CharField(
         'единица измерения',
-        max_length=MAX_NAMES_LENGTH,
+        max_length=MEASUREMENT_UNIT_MAX_LENGTH,
         help_text='Единица измерения.',
     )
 
@@ -79,6 +76,9 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+    MIN_COOKING_TIME = 1
+    RECIPE_MAX_NAME_LENGTH = 200
+    RECIPE_MAX_TEXT_LENGTH = 500
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -90,7 +90,7 @@ class Recipe(models.Model):
     name = models.CharField(
         'название рецепта',
         unique=True,
-        max_length=MAX_NAMES_LENGTH,
+        max_length=RECIPE_MAX_NAME_LENGTH,
         help_text='Название рецепта.',
     )
     image = models.ImageField(
@@ -99,7 +99,7 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         'описание рецепта',
-        max_length=MAX_TEXT_LENGTH,
+        max_length=RECIPE_MAX_TEXT_LENGTH,
         help_text='Описание рецепта.',
     )
     ingredients = models.ManyToManyField(
@@ -116,10 +116,10 @@ class Recipe(models.Model):
         verbose_name='рецепты в избранном',
         help_text='Рецепты в избранном.',
     )
-    in_shoping_cart = models.ManyToManyField(
+    in_shopping_cart = models.ManyToManyField(
         to=User,
         through='ShopingCart',
-        related_name='shoping_recipes',
+        related_name='shopping_recipes',
         verbose_name='рецепты в корзине',
         help_text='Рецепты в корзине.',
     )
@@ -151,18 +151,13 @@ class Recipe(models.Model):
         ordering = ("-pub_date",)
         verbose_name = 'рецепт'
         verbose_name_plural = 'рецепты'
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(cooking_time__gte=MIN_COOKING_TIME),
-                name='cooking_time_min_constraint'
-            ),
-        ]
 
     def __str__(self):
         return self.name
 
 
 class IngredientsAmount(models.Model):
+    MIN_AMOUNT = 1
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
@@ -191,10 +186,6 @@ class IngredientsAmount(models.Model):
             models.UniqueConstraint(
                 fields=['ingredient', 'recipe'],
                 name='ingredients_in_recipe_unique_constraint'
-            ),
-            models.CheckConstraint(
-                check=models.Q(amount__gte=MIN_AMOUNT),
-                name='amount_min_constraint'
             ),
         ]
 
@@ -238,14 +229,14 @@ class ShopingCart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shoping_cart',
+        related_name='shopping_cart',
         verbose_name='покупатель',
         help_text='Владелец корзины.',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='shoping_cart',
+        related_name='shopping_cart',
         verbose_name='покупки',
         help_text='Рецепт в корзине.',
     )
