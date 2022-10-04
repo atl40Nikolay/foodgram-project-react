@@ -1,9 +1,12 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(dotenv_path=os.path.join(os.getcwd(), 'infra', '.env'))
+if find_dotenv():
+    load_dotenv(find_dotenv())
+else:
+    load_dotenv(dotenv_path=os.path.join(os.getcwd(), 'infra', '.env'))
 
 DEBUG = False
 
@@ -33,7 +36,6 @@ INSTALLED_APPS = [
     'djoser',
     'users.apps.UsersConfig',
     'recipe.apps.RecipeConfig'
-
 ]
 
 MIDDLEWARE = [
