@@ -1,11 +1,7 @@
-from django.contrib.auth import get_user_model
 from django.core import validators
 from django.db import models
 
 from colorfield.fields import ColorField
-
-
-User = get_user_model()
 
 
 class Tag(models.Model):
@@ -80,7 +76,7 @@ class Recipe(models.Model):
     RECIPE_MAX_NAME_LENGTH = 200
     RECIPE_MAX_TEXT_LENGTH = 500
     author = models.ForeignKey(
-        User,
+        'users.User',
         on_delete=models.CASCADE,
         verbose_name='автор рецепта',
         related_name='user_recipes',
@@ -110,14 +106,14 @@ class Recipe(models.Model):
         help_text='Ингредиенты рецепта.',
     )
     favorited_recipe = models.ManyToManyField(
-        to=User,
+        to='users.User',
         through='FavoriteRecipes',
         related_name='favorited_recipes',
         verbose_name='рецепты в избранном',
         help_text='Рецепты в избранном.',
     )
     in_shopping_cart = models.ManyToManyField(
-        to=User,
+        to='users.User',
         through='ShopingCart',
         related_name='shopping_recipes',
         verbose_name='рецепты в корзине',
@@ -197,7 +193,7 @@ class IngredientsAmount(models.Model):
 
 class FavoriteRecipes(models.Model):
     user = models.ForeignKey(
-        User,
+        'users.User',
         on_delete=models.CASCADE,
         related_name='favorite_recipes',
         verbose_name='пользователь',
@@ -227,7 +223,7 @@ class FavoriteRecipes(models.Model):
 
 class ShopingCart(models.Model):
     user = models.ForeignKey(
-        User,
+        'users.User',
         on_delete=models.CASCADE,
         related_name='shopping_cart',
         verbose_name='покупатель',

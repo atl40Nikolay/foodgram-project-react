@@ -1,6 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
 from rest_framework.authtoken.models import Token
+
+from recipe.models import ShopingCart
 
 
 class MyToken(Token):
@@ -9,6 +12,14 @@ class MyToken(Token):
         proxy = True
         verbose_name = 'токен'
         verbose_name_plural = 'токены'
+
+
+class ShoppingCart(ShopingCart):
+
+    class Meta:
+        proxy = True
+        verbose_name = 'корзина для покупок'
+        verbose_name_plural = 'корзины для покупок'
 
 
 class User(AbstractUser):

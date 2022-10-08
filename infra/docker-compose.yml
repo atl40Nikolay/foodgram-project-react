@@ -4,6 +4,7 @@ volumes:
   postgres_data:
   static_value:
   media_value:
+  redoc:
 
 services:
 
@@ -41,6 +42,7 @@ services:
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/redoc.html:/usr/share/nginx/html/api/docs/redoc.html
       - ../docs/openapi-schema.yml:/usr/share/nginx/html/api/docs/openapi-schema.yml
+      # - redoc:/usr/share/nginx/html/api/docs/
       - static_value:/var/html/backend_static/
       - media_value:/var/html/media/
     depends_on:

@@ -60,10 +60,10 @@ class FavoriteRecipesAdmin(admin.ModelAdmin):
     list_filter = ('recipe__tags', )
 
 
-class ShopingCartAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'recipe', )
-    search_fields = ('name', '^user__email', '^user__username', )
-    list_filter = ('recipe__tags', )
+# class ShopingCartAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'user', 'recipe', )
+#     search_fields = ('name', '^user__email', '^user__username', )
+#     list_filter = ('recipe__tags', )
 
 
 admin.site.register(Tag, TagAdmin)
@@ -71,4 +71,4 @@ admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(IngredientsAmount, IngredientsAmountAdmin)
 admin.site.register(FavoriteRecipes, FavoriteRecipesAdmin)
-admin.site.register(ShopingCart, ShopingCartAdmin)
+# admin.site.register(ShopingCart, ShopingCartAdmin)
