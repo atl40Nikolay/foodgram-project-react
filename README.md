@@ -295,12 +295,6 @@ http://localhost/api/recipes/
 
 ### Автор проекта:
 
-для теста админки
-```
-admin@cyber.org
-Password13@
-```
-
 Николай Журавлёв
 [![Me](https://img.shields.io/badge/https%3A%2F%2Fgithub.com%2Fatl40Nikolay-Николай%20Журавлёв-green)](https://github.com/atl40Nikolay)
 
